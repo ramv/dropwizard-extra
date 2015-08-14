@@ -12,14 +12,24 @@ import java.util.List;
  */
 public class InstrumentedProducer<K, V> implements KafkaProducer<K, V> {
 
-    private final Producer<K, V> underlying;
+    private final KafkaProducer<K, V> underlying;
     private final Meter sentMessages;
 
-    public InstrumentedProducer(final Producer<K, V> underlying,
+    public InstrumentedProducer(final KafkaProducer<K, V> underlying,
                                 final MetricRegistry registry,
                                 final String name) {
         this.underlying = underlying;
         this.sentMessages = registry.meter(MetricRegistry.name(name, "sent"));
+    }
+
+    public void send(final String topic, final V message) {
+        underlying.send(topic, message);
+        sentMessages.mark();
+    }
+
+    public void send(final String topic, final K key, final V message) {
+        underlying.send(topic, key, message);
+        sentMessages.mark();
     }
 
     public void send(final KeyedMessage<K, V> message) {
